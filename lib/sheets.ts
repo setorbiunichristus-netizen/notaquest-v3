@@ -101,5 +101,7 @@ export function agruparPorMedico(notas: NotaRow[]): NotaPorMedico[] {
 }
 
 export function getMesesUnicos(notas: NotaRow[]): string[] {
-  return [...new Set(notas.map(n => n.mes).filter(Boolean))]
+  const set = new Set<string>()
+  notas.forEach(n => { if (n.mes) set.add(n.mes) })
+  return Array.from(set)
 }
