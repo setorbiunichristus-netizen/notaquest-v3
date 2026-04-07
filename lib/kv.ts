@@ -1,4 +1,9 @@
-import { kv } from '@vercel/kv'
+import { Redis } from '@upstash/redis'
+
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+})
 
 export interface Config {
   admins: string[]
@@ -22,7 +27,7 @@ const DEFAULT_CONFIG: Config = {
 
 export async function getConfig(): Promise<Config> {
   try {
-    const data = await kv.get<Config>('notaquest:config')
+    const data = await redis.get<Config>('notaquest:config')
     return { ...DEFAULT_CONFIG, ...data }
   } catch {
     return DEFAULT_CONFIG
@@ -32,7 +37,7 @@ export async function getConfig(): Promise<Config> {
 export async function saveConfig(config: Partial<Config>): Promise<Config> {
   const current = await getConfig()
   const updated = { ...current, ...config }
-  await kv.set('notaquest:config', updated)
+  await redis.set('notaquest:config', updated)
   return updated
 }
 
@@ -40,7 +45,7 @@ export async function addAdmin(email: string): Promise<Config> {
   const config = await getConfig()
   if (!config.admins.includes(email)) {
     config.admins.push(email)
-    await kv.set('notaquest:config', config)
+    await redis.set('notaquest:config', config)
   }
   return config
 }
@@ -48,12 +53,12 @@ export async function addAdmin(email: string): Promise<Config> {
 export async function removeAdmin(email: string): Promise<Config> {
   const config = await getConfig()
   config.admins = config.admins.filter(e => e !== email)
-  await kv.set('notaquest:config', config)
+  await redis.set('notaquest:config', config)
   return config
 }
 
 export async function registrarEnvio(): Promise<void> {
   const config = await getConfig()
   config.ultimoEnvio = new Date().toISOString()
-  await kv.set('notaquest:config', config)
+  await redis.set('notaquest:config', config)
 }
